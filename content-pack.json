@@ -1,0 +1,335 @@
+{
+  "schema": "demo-content-pack/1",
+  "id": "stolen-token-lab",
+  "title": "Stolen-token LAB",
+  "version": "0.1.0",
+  "demo": {
+    "id": "stolen-token-lab",
+    "name": "Stolen-token LAB",
+    "catalog": "C22",
+    "baseUrl": "http://localhost:4950",
+    "doctor": "/api/health",
+    "tags": [
+      "token-theft",
+      "bearer",
+      "dpop",
+      "mtls",
+      "audience",
+      "sender-constrained",
+      "mock"
+    ]
+  },
+  "glossary": [
+    {
+      "id": "bearer",
+      "term": "Bearer token",
+      "definition": "A token that works for whoever holds it. No proof of possession is required, so a copied token is as good as the original until it expires.",
+      "aliases": [
+        "plain bearer"
+      ]
+    },
+    {
+      "id": "audience",
+      "term": "Audience binding",
+      "definition": "The token names the API it is for (aud, requested with the RFC 8707 resource parameter). A different API refuses it. This stops redirect to another API, not use at the intended API.",
+      "aliases": [
+        "aud",
+        "resource indicator"
+      ]
+    },
+    {
+      "id": "dpop",
+      "term": "DPoP",
+      "definition": "RFC 9449. The token carries cnf.jkt, the thumbprint of the client key. Every request adds a signed proof (htm, htu, iat, jti, ath, optional server nonce). A stolen token without the key is useless. In the Ping stack only PingFederate supports DPoP (owner-stated; UNVERIFIED here).",
+      "aliases": [
+        "demonstrating proof of possession"
+      ]
+    },
+    {
+      "id": "jkt",
+      "term": "JWK thumbprint (jkt)",
+      "definition": "RFC 7638: base64url SHA-256 of the key's required members in sorted order. The token stores it; the gateway recomputes it from the proof key."
+    },
+    {
+      "id": "ath",
+      "term": "Access token hash (ath)",
+      "definition": "base64url SHA-256 of the access token, inside the proof. It ties a proof to one token."
+    },
+    {
+      "id": "jti-replay",
+      "term": "Proof replay",
+      "definition": "Resending a captured proof. The gateway keeps recently seen jti values and refuses a repeat inside the iat window."
+    },
+    {
+      "id": "mtls",
+      "term": "Certificate-bound token",
+      "definition": "RFC 8705. The token carries cnf x5t#S256, the thumbprint of the client certificate used at the token endpoint; the API requires the same certificate. SIMULATED in this lab: a header stands in for the TLS layer."
+    },
+    {
+      "id": "full-compromise",
+      "term": "Full compromise",
+      "definition": "If the attacker steals the token and the private key, sender-constraining no longer helps. Keep keys non-extractable and tokens short-lived."
+    }
+  ],
+  "sources": [
+    {
+      "id": "rfc9449",
+      "title": "RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9449",
+      "kind": "standard",
+      "use": "proof claims, server checks, cnf.jkt, nonce",
+      "status": "read",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc8705",
+      "title": "RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens",
+      "url": "https://www.rfc-editor.org/rfc/rfc8705",
+      "kind": "standard",
+      "use": "cnf x5t#S256 and the resource-server check",
+      "status": "read",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc8707",
+      "title": "RFC 8707: Resource Indicators for OAuth 2.0",
+      "url": "https://www.rfc-editor.org/rfc/rfc8707",
+      "kind": "standard",
+      "use": "resource parameter and audience restriction",
+      "status": "read",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc6750",
+      "title": "RFC 6750: The OAuth 2.0 Bearer Token Usage",
+      "url": "https://www.rfc-editor.org/rfc/rfc6750",
+      "kind": "standard",
+      "use": "bearer semantics, theft and replay threats, error codes",
+      "status": "read",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc9700",
+      "title": "RFC 9700: Best Current Practice for OAuth 2.0 Security",
+      "url": "https://www.rfc-editor.org/rfc/rfc9700",
+      "kind": "standard",
+      "use": "sender-constraining and audience restriction guidance (first part of the document read)",
+      "status": "read",
+      "checked": "2026-10-21"
+    },
+    {
+      "id": "rfc7638",
+      "title": "RFC 7638: JSON Web Key (JWK) Thumbprint",
+      "url": "https://www.rfc-editor.org/rfc/rfc7638",
+      "kind": "standard",
+      "use": "jkt computation",
+      "status": "read",
+      "checked": "2026-10-21"
+    }
+  ],
+  "cards": [
+    {
+      "id": "try-bearer",
+      "label": "Replay a stolen bearer token",
+      "description": "A plain bearer token is a bearer instrument: whoever holds it can use it. {{agent}} calls {{api_a}} fine, and a thief who copied the token does exactly the same. Nothing at the gateway can tell them apart.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S01"
+      },
+      "story": "S01"
+    },
+    {
+      "id": "try-audience",
+      "label": "Audience binding at another API",
+      "description": "The token was minted for {{api_a}} (RFC 8707 resource, aud claim). Replayed at {{api_b}} it is refused. This stops token redirect, but not use at the right API.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S02"
+      },
+      "story": "S02"
+    },
+    {
+      "id": "try-dpop-nokey",
+      "label": "DPoP: token without the key",
+      "description": "The token carries cnf.jkt, the thumbprint of {{agent}}'s key. The thief has the token but signs the proof with their own key, so the thumbprint does not match.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S03"
+      },
+      "story": "S03"
+    },
+    {
+      "id": "try-proof-replay",
+      "label": "DPoP: replay a captured proof",
+      "description": "The thief captured the whole request, token and proof, and sends it again unchanged. The proof is still bound to the right key, method and URL, so only the jti replay cache stops it.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S05"
+      },
+      "story": "S05"
+    },
+    {
+      "id": "try-stale",
+      "label": "DPoP: a stale proof",
+      "description": "A proof the thief captured in flight is used ten minutes later. It was never delivered, so the jti is new, but its iat is outside the acceptance window.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S10"
+      },
+      "story": "S10"
+    },
+    {
+      "id": "try-nonce",
+      "label": "DPoP: server nonce",
+      "description": "The gateway demands a nonce it chose, which limits how far ahead a proof can be pre-made. The first call gets 401 use_dpop_nonce plus a DPoP-Nonce header; the retry with that nonce succeeds.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S11"
+      },
+      "story": "S11"
+    },
+    {
+      "id": "try-full",
+      "label": "Token and key both stolen",
+      "description": "Sender-constraining only helps while the key stays secret. A thief who has both the token and the private key signs valid proofs and gets in. Keep keys non-extractable (hardware or OS keystore) and tokens short-lived.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S13"
+      },
+      "story": "S13"
+    },
+    {
+      "id": "try-mtls",
+      "label": "mTLS-bound token (simulated)",
+      "description": "The token carries cnf x5t#S256, the thumbprint of {{agent}}'s client certificate. The thief has the token but not the certificate. The certificate part is SIMULATED with a header: this lab does no real TLS.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-S14"
+      },
+      "story": "S14"
+    },
+    {
+      "id": "concept-what-stops-replay",
+      "label": "What stops a replay",
+      "description": "Nothing for bearer, audience for the wrong API, a key or certificate for sender-constrained tokens.",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#concept-what-stops-replay"
+      },
+      "terms": [
+        "bearer",
+        "audience",
+        "dpop",
+        "mtls",
+        "full-compromise"
+      ]
+    },
+    {
+      "id": "concept-proof-checks",
+      "label": "The DPoP proof checks",
+      "description": "htm, htu, iat, jti, ath, nonce, signature and key binding.",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#concept-proof-checks"
+      },
+      "terms": [
+        "dpop",
+        "jkt",
+        "ath",
+        "jti-replay"
+      ]
+    },
+    {
+      "id": "ref-doctor",
+      "label": "Doctor and health",
+      "description": "Preflight checks and the demo-health/1 endpoint.",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/api/health"
+      }
+    }
+  ],
+  "stories": [
+    {
+      "id": "S01",
+      "title": "Bearer replay works",
+      "say": "A plain bearer token is a bearer instrument: whoever holds it can use it. {{agent}} calls {{api_a}} fine, and a thief who copied the token does exactly the same. Nothing at the gateway can tell them apart."
+    },
+    {
+      "id": "S02",
+      "title": "Audience binding stops replay at another API",
+      "say": "The token was minted for {{api_a}} (RFC 8707 resource, aud claim). Replayed at {{api_b}} it is refused. This stops token redirect, but not use at the right API."
+    },
+    {
+      "id": "S03",
+      "title": "DPoP: the stolen token is useless without the key",
+      "say": "The token carries cnf.jkt, the thumbprint of {{agent}}'s key. The thief has the token but signs the proof with their own key, so the thumbprint does not match."
+    },
+    {
+      "id": "S04",
+      "title": "DPoP: no downgrade to Bearer",
+      "say": "The thief drops the proof and sends the DPoP-bound token as a plain Bearer. A gateway that honours cnf.jkt refuses it; one that ignores cnf treats it as a bearer token."
+    },
+    {
+      "id": "S05",
+      "title": "DPoP: a replayed proof (same jti) is refused",
+      "say": "The thief captured the whole request, token and proof, and sends it again unchanged. The proof is still bound to the right key, method and URL, so only the jti replay cache stops it."
+    },
+    {
+      "id": "S06",
+      "title": "DPoP: a proof for another URL is refused (htu)",
+      "say": "A proof captured in flight for {{path_read}} is replayed against {{path_other}}. The proof names its URL, so the gateway refuses it."
+    },
+    {
+      "id": "S07",
+      "title": "DPoP: a proof for another method is refused (htm)",
+      "say": "A proof captured for a GET is replayed as a POST on the same URL (a write). The proof names its method, so the gateway refuses it."
+    },
+    {
+      "id": "S08",
+      "title": "DPoP: a proof for a different token is refused (ath)",
+      "say": "The proof carries ath, the hash of the access token it was made for. A proof captured for token one cannot be reused with stolen token two, even from the same key."
+    },
+    {
+      "id": "S09",
+      "title": "DPoP: a proof without ath is refused",
+      "say": "A client that leaves ath out of its proof binds the proof to nothing. The gateway insists on ath whenever a proof accompanies an access token."
+    },
+    {
+      "id": "S10",
+      "title": "DPoP: a stale proof is refused (iat)",
+      "say": "A proof the thief captured in flight is used ten minutes later. It was never delivered, so the jti is new, but its iat is outside the acceptance window."
+    },
+    {
+      "id": "S11",
+      "title": "DPoP: server nonce required, then accepted",
+      "say": "The gateway demands a nonce it chose, which limits how far ahead a proof can be pre-made. The first call gets 401 use_dpop_nonce plus a DPoP-Nonce header; the retry with that nonce succeeds."
+    },
+    {
+      "id": "S12",
+      "title": "DPoP: a proof signed by the wrong key is refused",
+      "say": "The thief puts {{agent}}'s public key in the proof header (so the thumbprint matches) but cannot sign with the private key. The signature check catches it."
+    },
+    {
+      "id": "S13",
+      "title": "Honest limit: token and key stolen together",
+      "say": "Sender-constraining only helps while the key stays secret. A thief who has both the token and the private key signs valid proofs and gets in. Keep keys non-extractable (hardware or OS keystore) and tokens short-lived."
+    },
+    {
+      "id": "S14",
+      "title": "mTLS-bound token without the certificate (simulated)",
+      "say": "The token carries cnf x5t#S256, the thumbprint of {{agent}}'s client certificate. The thief has the token but not the certificate. The certificate part is SIMULATED with a header: this lab does no real TLS."
+    }
+  ]
+}

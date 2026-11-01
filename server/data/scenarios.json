@@ -1,0 +1,847 @@
+[
+  {
+    "id": "S01",
+    "slug": "bearer-replay",
+    "kind": "lesson",
+    "title": "Bearer replay works",
+    "defence": "none",
+    "takeaway": "A plain bearer token is a bearer instrument: whoever holds it can use it. {{agent}} calls {{api_a}} fine, and a thief who copied the token does exactly the same. Nothing at the gateway can tell them apart.",
+    "talk": "\"Whoever holds this token is the agent. The thief is no different to the gateway.\" This is the lesson; do not skip it.",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 6750 1.2",
+      "RFC 6750 5"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 200
+    },
+    "blockedBy": null,
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "bearer",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "legit",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "say": "{{agent}} reads {{asset}} with its token.",
+        "expect": {
+          "status": 200
+        }
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "say": "The thief replays the captured token. It works. This is the lesson.",
+        "expect": {
+          "status": 200
+        }
+      }
+    ]
+  },
+  {
+    "id": "S02",
+    "slug": "audience-binding",
+    "kind": "attack",
+    "title": "Audience binding stops replay at another API",
+    "defence": "audience",
+    "takeaway": "The token was minted for {{api_a}} (RFC 8707 resource, aud claim). Replayed at {{api_b}} it is refused. This stops token redirect, but not use at the right API.",
+    "talk": "\"Good against the wrong API. Useless against the right one.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 8707 2, 3",
+      "RFC 9700 2.3"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_token"
+    },
+    "blockedBy": "audience",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "bearer",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "legit",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "say": "{{agent}} calls {{api_a}}.",
+        "expect": {
+          "status": 200
+        }
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "b",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "say": "The thief tries the same token at {{api_b}}.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_token"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S03",
+    "slug": "dpop-no-key",
+    "kind": "attack",
+    "title": "DPoP: the stolen token is useless without the key",
+    "defence": "dpop_binding",
+    "takeaway": "The token carries cnf.jkt, the thumbprint of {{agent}}'s key. The thief has the token but signs the proof with their own key, so the thumbprint does not match.",
+    "talk": "\"Same token, valid proof, wrong key: the thumbprint in the token does not match.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 6",
+      "RFC 7638"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_token"
+    },
+    "blockedBy": "dpop_binding",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "legit",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "say": "{{agent}} sends token plus a proof signed with its key.",
+        "expect": {
+          "status": 200
+        }
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "attacker"
+        },
+        "say": "The thief signs a perfectly valid proof with their own key.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_token"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S04",
+    "slug": "dpop-downgrade",
+    "kind": "attack",
+    "title": "DPoP: no downgrade to Bearer",
+    "defence": "dpop_binding",
+    "takeaway": "The thief drops the proof and sends the DPoP-bound token as a plain Bearer. A gateway that honours cnf.jkt refuses it; one that ignores cnf treats it as a bearer token.",
+    "talk": "\"Drop the proof, say Bearer. A gateway must honour `cnf`, or DPoP is decoration.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 7.1"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_token"
+    },
+    "blockedBy": "dpop_binding",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "say": "Token only, as Authorization: Bearer.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_token"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S05",
+    "slug": "dpop-proof-replay",
+    "kind": "attack",
+    "title": "DPoP: a replayed proof (same jti) is refused",
+    "defence": "dpop_jti",
+    "takeaway": "The thief captured the whole request, token and proof, and sends it again unchanged. The proof is still bound to the right key, method and URL, so only the jti replay cache stops it.",
+    "talk": "\"Right key, right URL, same jti. Only the replay cache stops it.\"",
+    "stolen": {
+      "token": true,
+      "proof": true,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 11.1"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_jti",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "legit",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "say": "{{agent}} makes the real call.",
+        "expect": {
+          "status": 200
+        }
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "replay": "legit",
+        "say": "The thief resends the captured request, byte for byte.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S06",
+    "slug": "dpop-wrong-htu",
+    "kind": "attack",
+    "title": "DPoP: a proof for another URL is refused (htu)",
+    "defence": "dpop_htu",
+    "takeaway": "A proof captured in flight for {{path_read}} is replayed against {{path_other}}. The proof names its URL, so the gateway refuses it.",
+    "talk": "\"A proof is for one URL.\"",
+    "stolen": {
+      "token": true,
+      "proof": true,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.2",
+      "RFC 9449 4.3"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_htu",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "cap",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "send": false,
+        "say": "The thief intercepts a request for {{path_read}} before it is delivered."
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "replay": "cap",
+        "path": "{{path_other}}",
+        "say": "The thief sends the captured proof to {{path_other}}.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S07",
+    "slug": "dpop-wrong-htm",
+    "kind": "attack",
+    "title": "DPoP: a proof for another method is refused (htm)",
+    "defence": "dpop_htm",
+    "takeaway": "A proof captured for a GET is replayed as a POST on the same URL (a write). The proof names its method, so the gateway refuses it.",
+    "talk": "\"A proof is for one method: a GET proof cannot become a write.\"",
+    "stolen": {
+      "token": true,
+      "proof": true,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.2",
+      "RFC 9449 4.3"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_htm",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "cap",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_write}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "send": false,
+        "say": "The thief intercepts a GET proof for {{path_write}} before delivery."
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "replay": "cap",
+        "method": "POST",
+        "say": "The thief turns it into a POST.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S08",
+    "slug": "dpop-wrong-ath",
+    "kind": "attack",
+    "title": "DPoP: a proof for a different token is refused (ath)",
+    "defence": "dpop_ath",
+    "takeaway": "The proof carries ath, the hash of the access token it was made for. A proof captured for token one cannot be reused with stolen token two, even from the same key.",
+    "talk": "\"A proof is for one token.\"",
+    "stolen": {
+      "token": true,
+      "proof": true,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.2",
+      "RFC 9449 4.3"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_ath",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "issue",
+        "id": "t2",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "cap",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "send": false,
+        "say": "The thief captures a proof made for the first token."
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "replay": "cap",
+        "token": "t2",
+        "say": "The thief pairs it with the second token.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S09",
+    "slug": "dpop-missing-ath",
+    "kind": "conformance",
+    "title": "DPoP: a proof without ath is refused",
+    "defence": "dpop_ath",
+    "takeaway": "A client that leaves ath out of its proof binds the proof to nothing. The gateway insists on ath whenever a proof accompanies an access token.",
+    "talk": "\"A client that leaves ath out binds the proof to nothing.\"",
+    "stolen": {
+      "token": false,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.2"
+    ],
+    "attackStep": "call",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_ath",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "call",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client",
+          "ath": "missing"
+        },
+        "say": "A buggy client omits ath.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S10",
+    "slug": "dpop-stale-iat",
+    "kind": "attack",
+    "title": "DPoP: a stale proof is refused (iat)",
+    "defence": "dpop_iat",
+    "takeaway": "A proof the thief captured in flight is used ten minutes later. It was never delivered, so the jti is new, but its iat is outside the acceptance window.",
+    "talk": "\"Ten minutes later, the same proof is dead.\"",
+    "stolen": {
+      "token": true,
+      "proof": true,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.3",
+      "RFC 9449 11.1"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_iat",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "cap",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "send": false,
+        "say": "The thief intercepts a proof before delivery."
+      },
+      {
+        "op": "advance",
+        "seconds": 600,
+        "say": "Ten minutes pass (virtual clock)."
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "replay": "cap",
+        "say": "The thief replays it now.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S11",
+    "slug": "dpop-nonce",
+    "kind": "conformance",
+    "title": "DPoP: server nonce required, then accepted",
+    "defence": "dpop_nonce",
+    "takeaway": "The gateway demands a nonce it chose, which limits how far ahead a proof can be pre-made. The first call gets 401 use_dpop_nonce plus a DPoP-Nonce header; the retry with that nonce succeeds.",
+    "talk": "\"The server chooses a nonce: 401, header, retry.\"",
+    "stolen": {
+      "token": false,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 8",
+      "RFC 9449 9"
+    ],
+    "attackStep": "first",
+    "expect": {
+      "status": 401,
+      "error": "use_dpop_nonce"
+    },
+    "blockedBy": "dpop_nonce",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "first",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client",
+          "nonce": "none"
+        },
+        "say": "{{agent}} sends a proof with no nonce.",
+        "expect": {
+          "status": 401,
+          "error": "use_dpop_nonce"
+        }
+      },
+      {
+        "op": "call",
+        "id": "retry",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client",
+          "nonce": "learned"
+        },
+        "say": "It retries with the nonce from the DPoP-Nonce header.",
+        "expect": {
+          "status": 200
+        }
+      }
+    ]
+  },
+  {
+    "id": "S12",
+    "slug": "dpop-forged-signature",
+    "kind": "attack",
+    "title": "DPoP: a proof signed by the wrong key is refused",
+    "defence": "dpop_signature",
+    "takeaway": "The thief puts {{agent}}'s public key in the proof header (so the thumbprint matches) but cannot sign with the private key. The signature check catches it.",
+    "talk": "\"Victim's public key in the header, attacker's signature.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9449 4.3 item 6"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_dpop_proof"
+    },
+    "blockedBy": "dpop_signature",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client",
+          "signWith": "attacker"
+        },
+        "say": "The proof names the victim's key but is signed by the thief.",
+        "expect": {
+          "status": 401,
+          "error": "invalid_dpop_proof"
+        }
+      }
+    ]
+  },
+  {
+    "id": "S13",
+    "slug": "full-compromise",
+    "kind": "limit",
+    "title": "Honest limit: token and key stolen together",
+    "defence": "none",
+    "takeaway": "Sender-constraining only helps while the key stays secret. A thief who has both the token and the private key signs valid proofs and gets in. Keep keys non-extractable (hardware or OS keystore) and tokens short-lived.",
+    "talk": "\"Token and key together: it works. Say so plainly. Non-extractable keys, short lifetimes.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": true,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 9700 4.10.1"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 200
+    },
+    "blockedBy": null,
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "dpop",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "DPoP",
+        "proof": {
+          "key": "client"
+        },
+        "say": "The thief holds the victim's key and signs fresh proofs.",
+        "expect": {
+          "status": 200
+        }
+      }
+    ]
+  },
+  {
+    "id": "S14",
+    "slug": "mtls-no-cert",
+    "kind": "attack",
+    "title": "mTLS-bound token without the certificate (simulated)",
+    "defence": "mtls_binding",
+    "takeaway": "The token carries cnf x5t#S256, the thumbprint of {{agent}}'s client certificate. The thief has the token but not the certificate. The certificate part is SIMULATED with a header: this lab does no real TLS.",
+    "talk": "\"Token without the certificate. Remember: a header stands in for TLS here.\"",
+    "stolen": {
+      "token": true,
+      "proof": false,
+      "key": false,
+      "cert": false
+    },
+    "rfc": [
+      "RFC 8705 3"
+    ],
+    "attackStep": "thief",
+    "expect": {
+      "status": 401,
+      "error": "invalid_token"
+    },
+    "blockedBy": "mtls_binding",
+    "steps": [
+      {
+        "op": "issue",
+        "id": "t1",
+        "kind": "mtls",
+        "holder": "client",
+        "api": "a"
+      },
+      {
+        "op": "call",
+        "id": "legit",
+        "who": "client",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "cert": "client",
+        "say": "{{agent}} connects with its certificate (simulated).",
+        "expect": {
+          "status": 200
+        }
+      },
+      {
+        "op": "call",
+        "id": "thief",
+        "who": "attacker",
+        "token": "t1",
+        "api": "a",
+        "method": "GET",
+        "path": "{{path_read}}",
+        "scheme": "Bearer",
+        "cert": "attacker",
+        "say": "The thief connects with a different certificate (simulated).",
+        "expect": {
+          "status": 401,
+          "error": "invalid_token"
+        }
+      }
+    ]
+  }
+]

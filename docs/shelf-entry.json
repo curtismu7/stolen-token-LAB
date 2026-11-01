@@ -1,0 +1,16 @@
+{
+  "demos": [
+    {
+      "id": "stolen-token-lab",
+      "name": "Stolen-token LAB",
+      "catalogId": "C22",
+      "kind": "Tester",
+      "description": "Replay a captured access token through a mock gateway and see what stops it: nothing (bearer), audience binding, DPoP (RFC 9449), or mTLS certificate binding (RFC 8705, simulated). Mock mode only; Live is refused.",
+      "url": "http://localhost:4950",
+      "healthPath": "/api/health",
+      "composeFile": "stolen-token-LAB/docker-compose.yml",
+      "composeOverlays": [],
+      "notes": "Host-run: ./scripts/run.sh (port 4950). Mock only: no tenant, no credentials. Docker: HOST_PORT=4950 docker compose up --build -d (published on 127.0.0.1 only). composeFile is relative to the demo root (the folder above this checkout)."
+    }
+  ]
+}

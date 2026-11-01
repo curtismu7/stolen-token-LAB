@@ -1,0 +1,36 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "replay",
+  "title": "How a stolen token is replayed",
+  "lede": "The mock authorization server issues a token to the agent. A thief captures it and replays it at the mock gateway, which forwards to an API only if every defence you left on agrees. Everything is simulated.",
+  "groups": {
+    "issuer": { "label": "Mock authorization server", "color": "blue" },
+    "holder": { "label": "Legitimate holder", "color": "dark" },
+    "thief": { "label": "Attacker", "color": "red" },
+    "gateway": { "label": "Mock gateway", "color": "grey" },
+    "api": { "label": "APIs", "color": "dark" }
+  },
+  "nodes": [
+    { "id": "as", "label": "Mock authorization server", "group": "issuer", "sub": ["Issues the access token (bearer, DPoP or mTLS-bound)."], "x": 0, "y": 0 },
+    { "id": "client", "label": "Agent", "group": "holder", "sub": ["The legitimate holder of the token (and the key)."], "x": 0, "y": 210 },
+    { "id": "attacker", "label": "Attacker", "group": "thief", "sub": ["Replays what was stolen."], "x": 0, "y": 420 },
+    { "id": "gateway", "label": "Mock gateway", "group": "gateway", "sub": ["Runs the defences you switched on."], "x": 400, "y": 210 },
+    { "id": "api_a", "label": "{{api_a}}", "group": "api", "sub": ["The API the token was issued for."], "x": 800, "y": 90 },
+    { "id": "api_b", "label": "{{api_b}}", "group": "api", "sub": ["Another API: wrong audience."], "x": 800, "y": 330 }
+  ],
+  "edges": [
+    { "id": "issue", "source": "as", "target": "client", "label": "1 token issued" },
+    { "id": "steal", "source": "client", "target": "attacker", "label": "token captured", "dashed": true },
+    { "id": "legit", "source": "client", "target": "gateway", "label": "legitimate call" },
+    { "id": "attack", "source": "attacker", "target": "gateway", "label": "replay" },
+    { "id": "to_a", "source": "gateway", "target": "api_a", "label": "to {{api_a}}" },
+    { "id": "to_b", "source": "gateway", "target": "api_b", "label": "to {{api_b}}" }
+  ],
+  "steps": [
+    { "title": "Token issued", "what": "The mock authorization server mints a labelled mock token for the agent.", "edges": [0] },
+    { "title": "Token captured", "what": "A thief copies the token (and, in the hard scenarios, a proof, the key or the certificate).", "edges": [1] },
+    { "title": "Legitimate call", "what": "The agent calls the gateway the way it should.", "edges": [2, 4] },
+    { "title": "Replay", "what": "The thief replays what it stole. The defences you left on decide the answer.", "edges": [3] },
+    { "title": "Forwarded or stopped", "what": "A replay that passes every check reaches an API; one that does not is refused at the gateway.", "edges": [4, 5] }
+  ]
+}

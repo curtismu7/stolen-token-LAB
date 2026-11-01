@@ -1,0 +1,14 @@
+[
+  { "id": "travel", "name": "Travel", "cast": {
+    "user": "Mark", "agent": "Trip Planner agent", "asset": "booking",
+    "api_a": "bookings-api", "host_a": "bookings.travel.example", "api_b": "loyalty-api", "host_b": "loyalty.travel.example",
+    "path_read": "/v1/bookings/1042", "path_write": "/v1/bookings/1042/cancel", "path_other": "/v1/bookings/1042/invoice" } },
+  { "id": "banking", "name": "Banking", "cast": {
+    "user": "Alice", "agent": "Payments agent", "asset": "transfer",
+    "api_a": "ledger-api", "host_a": "ledger.bank.example", "api_b": "cards-api", "host_b": "cards.bank.example",
+    "path_read": "/v1/transfers/771", "path_write": "/v1/transfers/771/release", "path_other": "/v1/transfers/771/receipt" } },
+  { "id": "retail", "name": "Retail", "cast": {
+    "user": "Priya", "agent": "Order assistant agent", "asset": "order",
+    "api_a": "orders-api", "host_a": "orders.retail.example", "api_b": "pricing-api", "host_b": "pricing.retail.example",
+    "path_read": "/v1/orders/5530", "path_write": "/v1/orders/5530/refund", "path_other": "/v1/orders/5530/label" } }
+]

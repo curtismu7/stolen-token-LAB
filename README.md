@@ -3,7 +3,7 @@
 Replay a captured access token against a mock API, through a mock gateway, and see what stops it: nothing (bearer), audience binding, DPoP, or a certificate binding.
 
 Tier: Tester
-Repo: https://github.com/ping-sandbox/stolen-token-LAB
+Repo: https://github.com/curtismu7/stolen-token-LAB
 Catalog: C22 (a row in the demo-shelf catalog, which lists it as kind Demo; this README declares Tester, as the rulebook does)
 
 Every defence is a switch on the gateway: turn one off and exactly the attack it was stopping gets through.
@@ -28,7 +28,7 @@ Fourteen scenarios (S01 to S14) as data in `server/data/scenarios.json`, in thre
 Prerequisites: Node 26 or newer (`.nvmrc` says 26). Docker only if you use the Docker form. You need access to the `ping-sandbox` organisation (the repo is internal).
 
 ```
-git clone https://github.com/ping-sandbox/stolen-token-LAB.git
+git clone https://github.com/curtismu7/stolen-token-LAB.git
 cd stolen-token-LAB
 npm ci
 npm run build

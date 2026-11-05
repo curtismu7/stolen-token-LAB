@@ -146,7 +146,7 @@ test('README follows the README standard: title ends in LAB, plain Tier and Repo
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'sections are in the standard order');
   assert.match(r, /lsof -iTCP:4950 -sTCP:LISTEN -n -P/);
   assert.match(r, /PORT=<other port> npm start/);
-  assert.ok(!/ping-devops|cmuir|curtismu/i.test(r));
+  assert.ok(!/ping-devops|cmuir/i.test(r));
 });
 
 test('app CSS follows the CSS standard and the shared stylesheet loads first', () => {

@@ -137,7 +137,7 @@ test('README follows the README standard: title ends in LAB, plain Tier and Repo
   const r = read('README.md');
   assert.match(r.split('\n')[0], /^# .* LAB$/);
   assert.match(r, /^Tier: Tester$/m);
-  assert.match(r, /^Repo: https:\/\/github.com/curtismu7\/stolen-token-LAB$/m);
+  assert.match(r, /^Repo: https:\/\/github\.com\/curtismu7\/stolen-token-LAB$/m);
   assert.match(r, /^Catalog: C22/m);
   const heads = [...r.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   const want = ['What is simulated', 'Run from a clone', 'Settings file', 'Ports, and what to do if the port is taken', 'Mock and live modes', 'Health, doctor and reset', 'Docker', 'Tests', 'Troubleshooting', 'Ownership'];

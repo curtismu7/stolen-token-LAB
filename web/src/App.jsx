@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ShelfLink from "./components/ShelfLink.jsx";
 import { getCatalog, getDiagram, getInfo, requestMode, resetServer, runScenario } from "./lib/api.js";
 import { fill } from "./lib/fill.js";
 import { startBoxes } from "./lib/diagram.js";
@@ -137,6 +138,7 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
         <div className="head">
         <h1 className="head__title"><span className="head__mark" aria-hidden="true">JKT</span> Stolen-token LAB</h1>
         <div className="head__tools">
+            <ShelfLink />
           <ModeToggle mode="mock" onAsk={askMode} />
           <label className="inline">Persona
             <select value={catalog.vertical} onChange={(e) => pickVertical(e.target.value)} aria-label="Persona and vertical">

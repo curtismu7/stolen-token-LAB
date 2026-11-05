@@ -25,7 +25,7 @@ Fourteen scenarios (S01 to S14) as data in `server/data/scenarios.json`, in thre
 
 ## Run from a clone
 
-Prerequisites: Node 26 or newer (`.nvmrc` says 26). Docker only if you use the Docker form. You need access to the `ping-sandbox` organisation (the repo is internal).
+Prerequisites: Node 26 or newer (`.nvmrc` says 26). Docker only if you use the Docker form. You need access to the owner's `curtismu7` account (the repo is internal).
 
 ```
 git clone https://github.com/curtismu7/stolen-token-LAB.git
@@ -102,7 +102,7 @@ On Node 26, a good run is: 97 server tests, 31 web tests, 27 repo and script tes
 
 ## Ownership
 
-- Owner: the Ping demo family owner (see the ping-sandbox organisation).
+- Owner: the Ping demo family owner (see the owner's `curtismu7` account).
 - License: MIT (`LICENSE`).
 - Found a problem? Open an issue on the repo.
 

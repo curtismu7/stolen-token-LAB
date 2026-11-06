@@ -1,12 +1,17 @@
 import React from "react";
 
-// Mock | Live, in the header of every page. Mock is the only mode that runs; asking for Live shows the server's refusal (see the note under the header).
-export default function ModeToggle({ mode, onAsk }) {
+// Rule 19: the Mock / Real toggle, in the header of every page. This lab is mock only, so Real is
+// always disabled with the server's reason (realAvailable: false, realReason from /api/info).
+export default function ModeToggle({ info, onSelect }) {
+  const loading = !info;
+  const source = info?.source;
+  const realOff = loading || info?.realAvailable !== true;
+  const pick = (next) => { if (next !== source) onSelect?.(next); };
   return (
-    <div className="seg" role="group" aria-label="Mode">
-      <button type="button" aria-pressed={mode === "mock"} onClick={() => onAsk("mock")} data-testid="mode-mock">Mock</button>
-      <button type="button" aria-pressed={mode === "live"} onClick={() => onAsk("live")} data-testid="mode-live">Live</button>
-      <span className="chip" data-testid="mode">Mode: {mode} (in-process mocks)</span>
+    <div className="seg" role="group" aria-label="Mode" data-testid="mode">
+      <button type="button" aria-pressed={source === "mock"} disabled={loading} onClick={() => pick("mock")} data-testid="mode-mock">Mock</button>
+      <button type="button" aria-pressed={source === "real"} disabled={realOff} title={realOff && !loading ? info?.realReason : undefined} onClick={() => pick("real")} data-testid="mode-real">Real</button>
+      <span className="chip">Mode: {source || "..."} (in-process mocks)</span>
     </div>
   );
 }

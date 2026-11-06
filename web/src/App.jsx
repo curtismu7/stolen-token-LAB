@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
-import { getCatalog, getDiagram, getInfo, requestMode, resetServer, runScenario } from "./lib/api.js";
+import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode } from "./lib/api.js";
 import { fill } from "./lib/fill.js";
 import { startBoxes } from "./lib/diagram.js";
 import ModeToggle from "./components/ModeToggle.jsx";
@@ -21,11 +21,12 @@ const typing = (t) => !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.i
 export default function App() {
   const [data, setData] = useState(null); // { catalog, diagram, epoch }
   const [loadError, setLoadError] = useState(null);
+  const [modeInfo, setModeInfo] = useState(null);
   const [tab, setTab] = useState(tabFromHash);
   const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("stl.theme", "")) ? read("stl.theme", "") : "system"));
   const [present, setPresent] = useState(() => read("stl.present", "0") === "1");
 
-  useEffect(() => { Promise.all([getCatalog(), getDiagram(), getInfo()]).then(([catalog, diagram, info]) => setData({ catalog, diagram, epoch: info.epoch })).catch((e) => setLoadError(e.message)); }, []);
+  useEffect(() => { Promise.all([getCatalog(), getDiagram(), getInfo()]).then(([catalog, diagram, info]) => { setData({ catalog, diagram, epoch: info.epoch }); setModeInfo(info); }).catch((e) => setLoadError(e.message)); }, []);
   useEffect(() => { const on = () => setTab(tabFromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
   useEffect(() => { if (theme === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme; }, [theme]);
   useEffect(() => { if (present) document.documentElement.dataset.present = "1"; else delete document.documentElement.dataset.present; }, [present]);
@@ -52,13 +53,13 @@ export default function App() {
       </>
     );
   }
-  return <Shell data={data} setData={setData} tab={tab} theme={theme} setTheme={setTheme} present={present} setPresent={setPresent} />;
+  return <Shell data={data} setData={setData} modeInfo={modeInfo} setModeInfo={setModeInfo} tab={tab} theme={theme} setTheme={setTheme} present={present} setPresent={setPresent} />;
 }
 
 const SkipLink = () => <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>;
 const Banner = ({ text }) => <p className="banner" role="note" data-state="mock" data-testid="banner">{text}</p>;
 
-function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
+function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, present, setPresent }) {
   const { catalog, diagram } = data;
   const [run, setRun] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -69,7 +70,6 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
   const [boxes, setBoxes] = useState(() => startBoxes(diagram));
   const [resetNote, setResetNote] = useState("");
   const [resetCount, setResetCount] = useState(0);
-  const [modeNote, setModeNote] = useState("");
   const tabRefs = useRef({});
   const seq = useRef(0);
   const epoch = useRef(data.epoch);
@@ -106,12 +106,24 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
     return () => window.removeEventListener("focus", on);
   }, [resetLocal]);
 
-  // Mock | Live: ask the server. Live is refused with its message and the page stays in Mock.
-  const askMode = useCallback(async (m) => {
-    if (m === "mock") { setModeNote(""); return; }
-    try { const r = await requestMode(m); setModeNote(r.accepted ? "" : r.message); }
-    catch (e) { setModeNote(`Could not ask the server about Live mode (${e.message}). The page stays in Mock mode.`); }
-  }, []);
+  // Mock | Real (rule 19): the toggle POSTs /api/mode. Real is refused (409) with the server's reason; a
+  // mock switch keeps the mode. Either way every switch reloads all the lab's data.
+  const [modeNote, setModeNote] = useState("");
+  const selectMode = useCallback(async (next) => {
+    if (next === "mock" && modeInfo?.source === "mock") return;
+    try {
+      await setMode(next);
+      const info = await getInfo();
+      setModeInfo(info);
+      const [c, d] = await Promise.all([getCatalog(catalog.vertical), getDiagram(catalog.vertical)]);
+      setData((cur) => ({ ...cur, catalog: c, diagram: d }));
+      setBoxes(startBoxes(d));
+      setModeNote("");
+    } catch (e) {
+      setModeNote(e.message);
+      getInfo().then(setModeInfo).catch(() => {});
+    }
+  }, [modeInfo, catalog, setData]);
 
   const setThemePersist = (v) => { setTheme(v); write("stl.theme", v); };
   const togglePresent = () => { write("stl.present", present ? "0" : "1"); setPresent(!present); };
@@ -139,7 +151,7 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
         <h1 className="head__title"><span className="head__mark" aria-hidden="true">JKT</span> Stolen-token LAB</h1>
         <div className="head__tools">
             <ShelfLink />
-          <ModeToggle mode="mock" onAsk={askMode} />
+          <ModeToggle info={modeInfo} onSelect={selectMode} />
           <label className="inline">Persona
             <select value={catalog.vertical} onChange={(e) => pickVertical(e.target.value)} aria-label="Persona and vertical">
               {catalog.verticals.map((v) => <option key={v.id} value={v.id}>{v.name}: {v.cast.user} and {v.cast.agent}</option>)}

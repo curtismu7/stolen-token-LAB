@@ -16,6 +16,8 @@ export const getDiagram = (vertical, name = "replay") => getJson(`/api/diagram${
 export const getInfo = () => getJson("/api/info");
 // The header toggle asks the server for a mode. Live is answered with data ({ accepted: false, message }), never an error.
 export const requestMode = (mode) => getJson(`/api/mode?requested=${encodeURIComponent(mode)}`);
+// Rule 19: POST /api/mode {source}; a refused Real comes back as a thrown 409 whose message is the server's reason.
+export const setMode = (source) => postJson("/api/mode", { source });
 export const resetServer = () => postJson("/api/reset");
 export const runScenario = (scenario, vertical, off = []) => postJson("/api/run", { scenario, vertical, off });
 export const getMutation = (scenario, vertical) => postJson("/api/mutation", { scenario, vertical });

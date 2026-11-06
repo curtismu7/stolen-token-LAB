@@ -162,26 +162,28 @@ describe("shell", () => {
     expect(localStorage.getItem("stl.present")).toBe("0");
   });
 
-  it("the Mock | Live toggle is in the header of every tab; Live is refused with the honest message and the page stays in Mock", async () => {
+  it("the Mock | Real toggle is in the header of every tab; Real is refused with the honest reason and the page stays in Mock", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
     for (const t of ["Attack", "Gateway", "Token", "Diagram", "Raw"]) {
       await user.click(screen.getByRole("tab", { name: t }));
       expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByTestId("mode-live")).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByTestId("mode-real")).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByTestId("mode-real")).toBeDisabled();
       expect(screen.getByTestId("mode")).toHaveTextContent("Mode: mock");
     }
-    await user.click(screen.getByTestId("mode-live"));
-    const note = await screen.findByTestId("mode-note");
-    expect(note).toHaveTextContent(/Live mode is not available in this lab/);
-    expect(note).toHaveTextContent(/no live engine/);
-    expect(server.calls.some((c) => c.path === "/api/mode" && c.search === "?requested=live")).toBe(true);
-    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("mode-live")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode/);
-    await user.click(screen.getByTestId("mode-mock"));
+    await user.click(screen.getByTestId("mode-real"));
+    // Real is disabled with the server's reason as its tooltip, so the click is a no-op: no POST, no note, still Mock.
+    expect(server.calls.every((c) => !(c.method === "POST" && c.path === "/api/mode"))).toBe(true);
     expect(screen.queryByTestId("mode-note")).toBeNull();
+    expect(screen.getByTestId("mode-real")).toBeDisabled();
+    expect(screen.getByTestId("mode-real").getAttribute("title")).toContain("Live mode is not available in this lab");
+    expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode/);
+    // The mock direction: already in Mock, so the page asks nothing and stays put.
+    await user.click(screen.getByTestId("mode-mock"));
+    expect(server.calls.every((c) => !(c.method === "POST" && c.path === "/api/mode"))).toBe(true);
+    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
   });
 
   it("a reset made through the API or the script is noticed when the page regains focus", async () => {

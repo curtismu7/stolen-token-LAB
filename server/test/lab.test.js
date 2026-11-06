@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { withServer, rawHttp } from './helpers.js';
 import { DIAGRAM_NAMES, buildDiagram, loadDiagram, rawDiagram } from '../src/diagramData.js';
 import { validateDiagram } from '../src/diagramStudioValidate.js';
-import { LIVE_REFUSAL, MODES, modeInfo, modeOf } from '../src/mode.js';
+import { LIVE_REFUSAL, MODES, modeInfo, modeOf, rule19Info } from '../src/mode.js';
 import { VERTICALS } from '../src/stories.js';
 
 const post = (base, p, body, headers = {}) => fetch(base + p, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
@@ -15,6 +15,30 @@ test('mode: Mock is the only mode that runs, and Live is refused with the honest
   const i = modeInfo();
   assert.equal(i.mode, 'mock'); assert.equal(i.liveAvailable, false); assert.equal(i.liveRefusal, LIVE_REFUSAL);
   assert.match(LIVE_REFUSAL, /no live engine/); assert.match(LIVE_REFUSAL, /Mock mode/);
+  // Rule 19: the toggle contract on /api/info. This lab has no live side, so realAvailable is always false with the reason.
+  const r19 = rule19Info();
+  assert.equal(r19.source, 'mock'); assert.equal(r19.realAvailable, false); assert.equal(r19.realReason, LIVE_REFUSAL);
+});
+
+test('rule 19: GET /api/info carries {source, realAvailable, realReason}; POST /api/mode {source} switches mock and refuses real with a 409 reason; the body must be exactly {source}', async () => {
+  await withServer(async (b) => {
+    const info = await (await fetch(`${b}/api/info`)).json();
+    assert.equal(info.source, 'mock'); assert.equal(info.realAvailable, false); assert.equal(info.realReason, LIVE_REFUSAL);
+    // Switching to real is refused 409 with the reason; the response never echoes the path or a junk value.
+    const real = await fetch(b + '/api/mode', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ source: 'real' }) });
+    assert.equal(real.status, 409);
+    const rj = await real.json(); assert.equal(rj.error, 'real_not_available'); assert.equal(rj.message, LIVE_REFUSAL);
+    // Switching to mock succeeds and reports the same info shape.
+    const mock = await fetch(b + '/api/mode', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ source: 'mock' }) });
+    assert.equal(mock.status, 200);
+    const mj = await mock.json(); assert.equal(mj.source, 'mock'); assert.equal(mj.realAvailable, false);
+    // The body must be exactly {source}: extra keys, a junk value or a non-object are 400 without echoing the value.
+    for (const body of [{ source: 'mock', extra: 1 }, { source: 'zzz-secret-value' }, { mock: true }, [1], 'x']) {
+      const r = await fetch(b + '/api/mode', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      assert.equal(r.status, 400, JSON.stringify(Object.keys(body)));
+      assert.ok(!(await r.text()).includes('zzz-secret-value'));
+    }
+  });
 });
 
 test('GET /api/info and GET /api/mode: the toggle asks, Live is answered with data (200, accepted false), junk is a 400 that does not echo it', async () => {

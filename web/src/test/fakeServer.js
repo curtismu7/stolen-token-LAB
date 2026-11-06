@@ -3,7 +3,7 @@ import { CONTROLS, IAT_WINDOW_S } from "../../../server/src/gateway.js";
 import { runScenario, mutationProof } from "../../../server/src/runner.js";
 import { SCENARIOS, VERTICALS, getVertical, renderScenario } from "../../../server/src/stories.js";
 import { buildDiagram } from "../../../server/src/diagramData.js";
-import { LIVE_REFUSAL, modeInfo } from "../../../server/src/mode.js";
+import { LIVE_REFUSAL, modeInfo, rule19Info } from "../../../server/src/mode.js";
 
 export const BANNER = "MOCK mode. SIMULATED: mock gateway, mock authorization server and mock tokens. No tenant, no outbound network. The mTLS defence is a simulation (no real TLS).";
 
@@ -26,7 +26,13 @@ export function installFakeServer() {
     calls.push({ method, path: u.pathname, body, search: u.search });
     if (u.pathname === "/api/catalog") return json(catalogFor(u.searchParams.get("vertical") || undefined));
     if (u.pathname === "/api/diagram") return json(buildDiagram(getVertical(u.searchParams.get("vertical") || VERTICALS[0].id).cast, u.searchParams.get("name") || undefined));
-    if (u.pathname === "/api/info") return json({ ...modeInfo(), banner: BANNER, epoch });
+    if (u.pathname === "/api/info") return json({ ...modeInfo(), ...rule19Info(), banner: BANNER, epoch });
+    if (u.pathname === "/api/mode" && method === "POST") {
+      const source = body?.source;
+      if (!["mock", "real"].includes(source) || Object.keys(body).length !== 1) return json({ error: "bad_request", message: 'body must be exactly {source: "mock" or "real"}' }, 400);
+      if (source === "real") return json({ error: "real_not_available", message: LIVE_REFUSAL }, 409);
+      return json({ ...modeInfo(), ...rule19Info(), banner: BANNER, epoch });
+    }
     if (u.pathname === "/api/mode") { const r = u.searchParams.get("requested"); return json({ ...modeInfo(), requested: r, accepted: r === "mock", message: r === "live" ? LIVE_REFUSAL : "Mock mode." }); }
     if (u.pathname === "/api/reset") { epoch += 1; return json({ ok: true, epoch }); }
     if (u.pathname === "/api/run") return json({ banner: BANNER, ...runScenario(body.scenario, body.vertical, { off: body.off }) });

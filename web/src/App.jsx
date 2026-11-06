@@ -113,7 +113,7 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
     catch (e) { setModeNote(`Could not ask the server about Live mode (${e.message}). The page stays in Mock mode.`); }
   }, []);
 
-  const cycle = () => { const next = { system: "light", light: "dark", dark: "system" }[theme]; setTheme(next); write("stl.theme", next); };
+  const setThemePersist = (v) => { setTheme(v); write("stl.theme", v); };
   const togglePresent = () => { write("stl.present", present ? "0" : "1"); setPresent(!present); };
   const go = (id) => { window.location.hash = `#/${id}`; };
   const onTabKey = (e) => {
@@ -147,7 +147,13 @@ function Shell({ data, setData, tab, theme, setTheme, present, setPresent }) {
           </label>
           <button type="button" onClick={resetAll}>Reset lab</button>
           <button type="button" aria-pressed={present} onClick={togglePresent}>{present ? "Exit presenter (Esc)" : "Presenter (P)"}</button>
-          <button type="button" onClick={cycle} title="Theme: system, light, dark">Theme: {theme}</button>
+          <label className="inline">Theme
+            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
+              <option value="system">Auto</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
         </div>
         </div>
       </header>

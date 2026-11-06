@@ -247,11 +247,11 @@ describe("shell", () => {
     expect(screen.getByRole("button", { name: "Turn all defences on" })).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("theme button cycles and tabs are reachable by arrow keys", async () => {
+  it("theme select sets data-theme; tabs are reachable by arrow keys", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("button", { name: /Theme/ }));
+    await user.selectOptions(screen.getByTestId("theme"), "light");
     expect(document.documentElement.dataset.theme).toBe("light");
     screen.getByRole("tab", { name: "Attack" }).focus();
     await user.keyboard("{ArrowRight}");

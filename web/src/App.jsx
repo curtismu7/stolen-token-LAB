@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
+// Opened from Customer Agent LAB (UC12 routes here): strip below the banner + header Back only; nothing is preselected.
+import ReturnLink from "./return-link/ReturnLink.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode } from "./lib/api.js";
 import { fill } from "./lib/fill.js";
 import { startBoxes } from "./lib/diagram.js";
@@ -147,9 +149,11 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
       <SkipLink />
       <header>
         <Banner text={catalog.banner || FALLBACK_BANNER} />
+        <ReturnLink app="stolen-token-lab" />
         <div className="head">
         <h1 className="head__title"><span className="head__mark" aria-hidden="true">JKT</span> Stolen-token LAB</h1>
         <div className="head__tools">
+            <ReturnLink app="stolen-token-lab" variant="header" />
             <ShelfLink />
           <ModeToggle info={modeInfo} onSelect={selectMode} />
           <label className="inline">Persona

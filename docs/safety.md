@@ -14,7 +14,7 @@
 
 ## Rules this repo enforces (and tests pin)
 
-1. Loopback bind unless `STLAB_BIND` is set on purpose. Host header must be a loopback name. Writes must be same-origin.
+1. Loopback bind unless `STLAB_BIND` is set on purpose. Host header must be a loopback name, or a `LAB_ALLOWED_HOSTS` name with the lab's port (the lab-proxy). Writes must be same-origin; on an allowed Host only, the proxy's forwarded origin counts.
 2. Zero outbound network: a netguard refuses non-loopback sockets, DNS, fetch, UDP send and UDP connect and records the attempt; the doctor self-tests it; a test proves serving the API makes none.
 3. Ports 4950 to 4999 only, never a reserved one.
 4. No literal JWT, `sk-` key or real hostname in shipped data (`GET /api/safety-scan`, the doctor and a repo test scan for it). Tokens are minted at run time.

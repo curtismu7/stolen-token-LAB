@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { hostCheck, sameOriginWrites, scanHosts, scanKeys } from './safety.js';
+import { makeHostCheck, makeSameOriginWrites, scanHosts, scanKeys } from './safety.js';
 import { createHealth } from './health.js';
 import { createWorld, MAX_STEPS } from './world.js';
 import { CONTROLS, IAT_WINDOW_S } from './gateway.js';
@@ -18,14 +18,14 @@ const WEB_DIST = process.env.WEB_DIST || path.resolve(path.dirname(fileURLToPath
 const bad = (res, message, status = 400) => res.status(status).json({ error: status === 404 ? 'not_found' : 'bad_request', message });
 export const BANNER = 'MOCK mode. SIMULATED: mock gateway, mock authorization server and mock tokens. No tenant, no outbound network. The mTLS defence is a simulation (no real TLS).';
 
-export function createApp({ health = createHealth() } = {}) {
+export function createApp({ health = createHealth(), proxyHosts = new Set() } = {}) {
   const live = new Map(); // vertical id -> live world; POST /api/reset empties it
   let epoch = 0;          // counts resets, so a page opened elsewhere can notice one made through the API or the script
   const liveWorld = (vid) => { if (!live.has(vid)) live.set(vid, createWorld({ vertical: getVertical(vid), start: Date.now() })); return live.get(vid); };
   const app = express();
   app.disable('x-powered-by');
-  app.use(hostCheck);
-  app.use(sameOriginWrites);
+  app.use(makeHostCheck(proxyHosts));
+  app.use(makeSameOriginWrites(proxyHosts));
   app.use((_req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); next(); });
 
   const api = express.Router();

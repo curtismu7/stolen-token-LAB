@@ -46,6 +46,7 @@ This lab reads **no settings file**. It needs no tenant and holds no credentials
 - `PORT`: the port the server listens on (see Ports below).
 - `STLAB_BIND`: the bind address. Loopback (`127.0.0.1`) unless you set this on purpose; the Docker image sets it, and compose publishes on `127.0.0.1` only.
 - `HOST_PORT`: Docker only, the host port compose publishes on `127.0.0.1`.
+- `LAB_ALLOWED_HOSTS`: comma-separated host names (no ports) the lab answers to besides loopback, as `<name>:<PORT>`. Unset means loopback only. Docker defaults it to the name the family lab-proxy sends in Host (see `docker-compose.yml`); on that Host only, a write whose Origin equals `X-Forwarded-Proto://X-Forwarded-Host` (the proxy's own origin) counts as same-origin.
 - `VITE_PORT`: the Vite dev server port (development only).
 
 ## Ports, and what to do if the port is taken

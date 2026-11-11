@@ -16,7 +16,7 @@ describe("diagram", () => {
     render(<App />);
     await screen.findByRole("group", { name: /Flow diagram/ });
     await waitFor(() => expect(screen.getByRole("button", { name: "Simulate" })).toHaveAttribute("aria-disabled", "false"));
-    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Reset" }).length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Speed")).toHaveValue("1");
     for (const t of ["Mock authorization server", "Agent", "Attacker", "Mock gateway"]) expect(screen.getAllByText(t).length).toBeGreaterThan(0);
     expect(document.querySelectorAll(".react-flow__node")).toHaveLength(6);
@@ -55,7 +55,7 @@ describe("diagram", () => {
     const setBoxes = vi.fn(); const setCursor = vi.fn(); const resetPositions = vi.fn();
     const moved = startBoxes(diagram).map((b) => ({ ...b, position: { x: 1, y: 1 } }));
     render(<DiagramTab app={{ run: null, cast: {}, cursor: 2, setCursor, diagram, boxes: moved, setBoxes, resetPositions, resetEpoch: 0, theme: "light" }} />);
-    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Reset" }).find((b) => b.closest("[role='tabpanel'], .flow") || !b.closest("header")));
     expect(resetPositions).toHaveBeenCalledTimes(1);
     expect(setCursor).toHaveBeenCalledWith(-1);
     expect(startBoxes(diagram).map((b) => [b.id, b.position])).toEqual(diagram.nodes.map((n) => [n.id, { x: n.x, y: n.y }]));
@@ -104,7 +104,7 @@ describe("global Reset lab", () => {
     fireEvent.keyDown(node, { key: "Enter" });
     for (let i = 0; i < 3; i++) fireEvent.keyDown(node, { key: "ArrowRight", shiftKey: true });
     await waitFor(() => expect(xform()).not.toEqual(before));
-    await userEvent.click(screen.getByRole("button", { name: "Reset lab" }));
+    await userEvent.click(screen.getByTestId("reset"));
     await waitFor(() => expect(xform()).toEqual(before));
   });
 });

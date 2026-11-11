@@ -1,16 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ShelfLink from "./components/ShelfLink.jsx";
-// Opened from Customer Agent LAB (UC12 routes here): strip below the banner + header Back only; nothing is preselected.
+import ShelfLink from "./components/ShelfLink.jsx";// Opened from Customer Agent LAB (UC12 routes here): strip below the banner + header Back only; nothing is preselected.
 import ReturnLink from "./return-link/ReturnLink.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode } from "./lib/api.js";
 import { fill } from "./lib/fill.js";
 import { startBoxes } from "./lib/diagram.js";
-import ModeToggle from "./components/ModeToggle.jsx";
 import AttackTab from "./tabs/AttackTab.jsx";
 import GatewayTab from "./tabs/GatewayTab.jsx";
 import TokenTab from "./tabs/TokenTab.jsx";
 import DiagramTab from "./tabs/DiagramTab.jsx";
 import RawTab from "./tabs/RawTab.jsx";
+import TopMenu from "./top-menu/TopMenu.jsx";
 
 export const TABS = [["attack", "Attack"], ["gateway", "Gateway"], ["token", "Token"], ["diagram", "Diagram"], ["raw", "Raw"]];
 // The banner is never blank and always names the mode: this is the text used until the server answers (the server's own banner replaces it).
@@ -154,22 +153,17 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
         <h1 className="head__title"><span className="head__mark" aria-hidden="true">JKT</span> Stolen-token LAB</h1>
         <div className="head__tools">
             <ReturnLink app="stolen-token-lab" variant="header" />
-            <ShelfLink />
-          <ModeToggle info={modeInfo} onSelect={selectMode} />
-          <label className="inline">Persona
-            <select value={catalog.vertical} onChange={(e) => pickVertical(e.target.value)} aria-label="Persona and vertical">
-              {catalog.verticals.map((v) => <option key={v.id} value={v.id}>{v.name}: {v.cast.user} and {v.cast.agent}</option>)}
-            </select>
-          </label>
-          <button type="button" onClick={resetAll}>Reset lab</button>
-          <button type="button" aria-pressed={present} onClick={togglePresent}>{present ? "Exit presenter (Esc)" : "Presenter (P)"}</button>
-          <label className="inline">Theme
-            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
-              <option value="system">Auto</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
+            <TopMenu
+              mode={{ value: modeInfo?.source === "real" ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo?.realAvailable === true, realHint: modeInfo?.realAvailable !== true ? modeInfo?.realReason : undefined }}
+              vertical={{ value: catalog.vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
+              theme={{ value: theme === "system" ? "auto" : theme, onChange: setThemePersist }}
+              present={{ active: present, onToggle: togglePresent, label: "Presenter (P)" }}
+              help={{ href: "https://github.com/curtismu7/stolen-token-LAB#readme" }}
+              version={modeInfo?.version || null}
+              onReset={resetAll}
+            >
+              <ShelfLink />
+            </TopMenu>
         </div>
         </div>
       </header>

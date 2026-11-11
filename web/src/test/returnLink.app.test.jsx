@@ -14,6 +14,15 @@ beforeEach(() => { localStorage.clear(); installFakeServer(); });
 afterEach(() => { cleanup(); window.history.replaceState(null, "", "/"); });
 
 describe("return link", () => {
+  it("?from=ai-demo-standalone: strip named for AI Demo Standalone, Back to its fixed proxy path", async () => {
+    window.history.replaceState(null, "", "/stolen-token-lab/?from=ai-demo-standalone&uc=UC12#/attack");
+    render(<App />);
+    const note = await screen.findByRole("note", { name: "Opened from AI Demo Standalone" });
+    expect(note.textContent).toContain("UC12");
+    expect(screen.getAllByRole("button", { name: /Back to AI Demo Standalone/ })).toHaveLength(2);
+    expect(returnLinkFor("stolen-token-lab").href).toBe("/ai-demo-standalone/?returned=stolen-token-lab&uc=UC12");
+  });
+
   it("the vendored files match return-link.sha256, which names the parent commit", () => {
     const dir = path.join(process.cwd(), "src", "return-link");
     const text = fs.readFileSync(path.join(dir, "return-link.sha256"), "utf8");
@@ -37,7 +46,7 @@ describe("return link", () => {
     for (const q of ["/", "/?from=elsewhere&uc=UC12", "/?from=customer-agent&uc=%3Cb%3E", "/?from=customer-agent&uc=UC12&vertical=a%20b"]) {
       window.history.replaceState(null, "", `${q}#/attack`);
       render(<App />);
-      await screen.findByRole("button", { name: "Reset lab" });
+      await screen.findByTestId("reset");
       expect(screen.queryByRole("button", { name: /Back to/ })).toBeNull();
       expect(screen.queryByRole("note", NOTE)).toBeNull();
       cleanup();

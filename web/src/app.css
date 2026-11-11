@@ -4,6 +4,7 @@
 :root[data-present="1"] [data-admin-only] { display: none; }
 .page { padding: 0 0 32px; }
 header, .page { max-width: 1600px; margin-left: auto; margin-right: auto; }
+header { position: relative; } /* the TopMenu sign-in slot centers against the bar */
 main:focus { outline: none; }
 h2 { margin: 8px 0 4px; font-size: 24px; }
 h3 { margin: 0 0 8px; font-size: 17px; }

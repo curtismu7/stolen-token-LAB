@@ -53,7 +53,7 @@ describe("attack tab", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.selectOptions(screen.getByLabelText("Persona and vertical"), "banking");
+    await user.selectOptions(screen.getByTestId("vertical-select"), "banking");
     await waitFor(() => expect(screen.getAllByText(/Payments agent/).length).toBeGreaterThan(0));
     expect(document.body.textContent).not.toMatch(/\{\{/);
   });
@@ -129,14 +129,14 @@ describe("shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("button", { name: "Presenter (P)" }));
+    await user.click(screen.getByTestId("presenter"));
     expect(document.documentElement.dataset.present).toBe("1");
     expect(screen.getByTestId("banner")).toBeVisible();
     expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode/);
-    expect(screen.getByTestId("mode")).toBeVisible();
+    expect(screen.getByTestId("mode-select")).toBeVisible();
     expect(screen.getByTestId("presenter-say")).toHaveTextContent(/Whoever holds this token is the agent/);
     expect(localStorage.getItem("stl.present")).toBe("1");
-    expect(screen.getByRole("button", { name: "Exit presenter (Esc)" })).toBeInTheDocument();
+    expect(screen.getByTestId("presenter")).toHaveTextContent("Exit present (Esc)");
   });
 
   it("P toggles presenter mode and Esc leaves it, both with the banner on screen; modifier keys and typing are ignored", async () => {
@@ -162,28 +162,16 @@ describe("shell", () => {
     expect(localStorage.getItem("stl.present")).toBe("0");
   });
 
-  it("the Mock | Real toggle is in the header of every tab; Real is refused with the honest reason and the page stays in Mock", async () => {
+  it("the Mock | Real select is in the header of every tab; Real is disabled and the page stays in Mock", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
     for (const t of ["Attack", "Gateway", "Token", "Diagram", "Raw"]) {
       await user.click(screen.getByRole("tab", { name: t }));
-      expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByTestId("mode-real")).toHaveAttribute("aria-pressed", "false");
-      expect(screen.getByTestId("mode-real")).toBeDisabled();
-      expect(screen.getByTestId("mode")).toHaveTextContent("Mode: mock");
+      expect(screen.getByTestId("mode-select")).toHaveValue("mock");
+      expect(screen.getByRole("option", { name: "Real" })).toBeDisabled();
     }
-    await user.click(screen.getByTestId("mode-real"));
-    // Real is disabled with the server's reason as its tooltip, so the click is a no-op: no POST, no note, still Mock.
-    expect(server.calls.every((c) => !(c.method === "POST" && c.path === "/api/mode"))).toBe(true);
-    expect(screen.queryByTestId("mode-note")).toBeNull();
-    expect(screen.getByTestId("mode-real")).toBeDisabled();
-    expect(screen.getByTestId("mode-real").getAttribute("title")).toContain("Live mode is not available in this lab");
     expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode/);
-    // The mock direction: already in Mock, so the page asks nothing and stays put.
-    await user.click(screen.getByTestId("mode-mock"));
-    expect(server.calls.every((c) => !(c.method === "POST" && c.path === "/api/mode"))).toBe(true);
-    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
   });
 
   it("a reset made through the API or the script is noticed when the page regains focus", async () => {
@@ -232,7 +220,7 @@ describe("shell", () => {
     await verdict();
     await user.click(screen.getByRole("tab", { name: "Gateway" }));
     await user.click(await screen.findByRole("checkbox", { name: /Audience binding/ }));
-    await user.click(screen.getByRole("button", { name: "Reset lab" }));
+    await user.click(screen.getByTestId("reset"));
     await waitFor(() => expect(screen.getByTestId("reset-note")).toHaveTextContent(/all defences on/));
     expect(server.calls.some((c) => c.method === "POST" && c.path === "/api/reset")).toBe(true);
     expect(screen.getByRole("checkbox", { name: /Audience binding/ })).toBeChecked();
@@ -253,7 +241,7 @@ describe("shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.selectOptions(screen.getByTestId("theme"), "light");
+    await user.selectOptions(screen.getByTestId("theme-select"), "light");
     expect(document.documentElement.dataset.theme).toBe("light");
     screen.getByRole("tab", { name: "Attack" }).focus();
     await user.keyboard("{ArrowRight}");

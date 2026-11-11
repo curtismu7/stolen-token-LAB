@@ -15,4 +15,4 @@ Replays a captured access token against a mock gateway and shows which defence (
 - Settings: the lab reads no settings file and has no per-app `.env` loader; no bare `MODE` variable (Mock | Live is a header toggle, Live refused).
 - The diagram is `diagram-studio/1` data (`server/diagrams/replay.json`, loaded by name); edge `id` values are the keys the page lights. ReactFlow only: movable boxes, Simulate, Reset (restores positions), speed control.
 - CSS: the vendored `web/src/styles/standalone-ui.css` must stay byte-identical to the canonical copy; app CSS uses tokens only (`check-css.sh`). Run buttons use `aria-disabled`, never `disabled`.
-- Commits end with the Co-Authored-By line; one writer per repo; PR + merge on green; hosted CI only.
+- No AI attribution anywhere (owner, 2026-11-07): no Co-Authored-By trailer and no "Generated with" line in commits, PR bodies or files; CI runs `scripts/check-no-ai-attribution.sh`; one writer per repo; PR + merge on green; hosted CI only.

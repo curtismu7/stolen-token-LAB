@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { makeHostCheck, makeSameOriginWrites, scanHosts, scanKeys } from './safety.js';
-import { createHealth } from './health.js';
+import { createHealth, DEMO } from './health.js';
 import { createWorld, MAX_STEPS } from './world.js';
 import { CONTROLS, IAT_WINDOW_S } from './gateway.js';
 import { runScenario, runAll, mutationProof } from './runner.js';
@@ -41,7 +41,7 @@ export function createApp({ health = createHealth(), proxyHosts = new Set() } = 
   });
   const vertical = (req, res) => { const id = req.body?.vertical ?? req.query.vertical ?? VERTICALS[0].id; const v = typeof id === 'string' ? getVertical(id) : null; if (!v) bad(res, 'unknown vertical'); return v; };
 
-  api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ...modeInfo(), ...rule19Info(), version: health.DEMO.version || null, banner: BANNER, epoch }); });
+  api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ...modeInfo(), ...rule19Info(), version: DEMO.version || null, banner: BANNER, epoch }); });
   // Rule 19: POST /api/mode {source:"mock"|"real"}. This lab is mock only: real is a 409 with the honest reason.
   api.post('/mode', (req, res) => {
     res.set('Cache-Control', 'no-store');

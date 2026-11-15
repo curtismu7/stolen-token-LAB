@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Inert } from "../lib/Inert.jsx";
+import Json from "../components/JsonPane.jsx";
+
+// The keys that decide a replayed call (the gateway verdict `ok` / `error`, and the claims that bind or check it).
+const HOT = ["ok", "cnf", "aud", "ath", "htm", "htu", "jti", "iat", "nonce"];
 
 export default function RawTab({ app }) {
   const { run, cursor } = app;
@@ -22,8 +26,8 @@ export default function RawTab({ app }) {
             <span className="muted small">traceparent <code>{m.trace.traceparent}</code></span>
           </div>
           <div className="cols">
-            <section className="card"><h3>Request</h3><Inert block text={m.trace.request} testid="raw-request" /></section>
-            <section className="card"><h3>Response</h3><Inert block text={m.trace.response} testid="raw-response" /></section>
+            <section className="card"><h3>Request</h3><Json value={m.trace.request} label="Request" testId="raw-request" hot={HOT} /></section>
+            <section className="card"><h3>Response</h3><Json value={m.trace.response} label="Response" testId="raw-response" hot={HOT} /></section>
           </div>
           <section className="card"><h3>Gateway log</h3>
             <table className="claims" data-testid="gw-log">

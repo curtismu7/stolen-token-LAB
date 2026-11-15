@@ -3,10 +3,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App.jsx";
+import { setJsonView } from "../components/JsonPane.jsx";
 import { installFakeServer } from "./fakeServer.js";
 
 let server;
-beforeEach(() => { window.location.hash = "#/attack"; localStorage.clear(); delete document.documentElement.dataset.present; delete document.documentElement.dataset.theme; server = installFakeServer(); });
+beforeEach(() => { window.location.hash = "#/attack"; localStorage.clear(); setJsonView("form"); delete document.documentElement.dataset.present; delete document.documentElement.dataset.theme; server = installFakeServer(); });
 afterEach(cleanup);
 const verdict = () => screen.findByTestId("verdict");
 
@@ -113,14 +114,49 @@ describe("token and raw tabs", () => {
     expect(screen.getByTestId("proof-claims")).toHaveTextContent(/htu/);
   });
 
+  it("token tab: every pane is a Form | JSON pane, the choice is shared, and the binding claims stand out", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await verdict();
+    await user.selectOptions(screen.getByLabelText("Scenario"), "S03");
+    await waitFor(() => expect(screen.getByTestId("verdict")).toHaveTextContent(/stopped/));
+    await user.click(screen.getAllByRole("button", { name: /STOPPED/ })[0]);
+    await user.click(screen.getByRole("tab", { name: "Token" }));
+    const claims = await screen.findByTestId("token-claims-box");
+    expect(within(claims).getByRole("button", { name: "Form" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(claims).getByRole("button", { name: "JSON" })).toHaveAttribute("aria-pressed", "false");
+    expect(claims.querySelector('[data-hot="true"]')).not.toBeNull();
+    for (const id of ["token-claims", "proof-header", "proof-claims"]) expect(screen.getByTestId(`${id}-box`)).toHaveAttribute("data-view", "form");
+    await user.click(within(claims).getByRole("button", { name: "JSON" }));
+    for (const id of ["token-claims", "proof-header", "proof-claims"]) expect(screen.getByTestId(`${id}-box`)).toHaveAttribute("data-view", "raw");
+    expect(screen.getByTestId("token-claims").tagName).toBe("PRE");
+    expect(screen.getByTestId("token-claims")).toHaveTextContent(/"cnf": \{/);
+    expect(screen.getByTestId("proof-header")).toHaveTextContent(/"typ": "dpop\+jwt"/);
+  });
+
   it("raw tab shows the request, response and gateway log, as text", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
     await user.click(screen.getByRole("tab", { name: "Raw" }));
     expect(await screen.findByTestId("raw-request")).toHaveTextContent(/^GET /);
-    expect(screen.getByTestId("raw-response")).toHaveTextContent(/HTTP\/1.1 200/);
+    expect(screen.getByTestId("raw-response-head")).toHaveTextContent(/^HTTP\/1.1 200/);
     expect(within(screen.getByTestId("gw-log")).getByText("authorized")).toBeInTheDocument();
+  });
+
+  it("raw tab: a response with a JSON body keeps its headers as text and gives the body a Form | JSON pane", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await verdict();
+    await user.click(screen.getByRole("tab", { name: "Raw" }));
+    const box = await screen.findByTestId("raw-response-body-box");
+    expect(box).toHaveAttribute("data-view", "form");
+    expect(within(box).getByRole("button", { name: "Form" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("raw-response-body")).toHaveTextContent(/ok/);
+    await user.click(within(box).getByRole("button", { name: "JSON" }));
+    expect(screen.getByTestId("raw-response-body-box")).toHaveAttribute("data-view", "raw");
+    expect(screen.getByTestId("raw-response-body")).toHaveTextContent(/"ok": true/);
+    expect(screen.getByTestId("raw-response-head")).not.toHaveTextContent(/"ok"/);
   });
 });
 

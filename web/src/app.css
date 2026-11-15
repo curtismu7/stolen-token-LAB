@@ -46,12 +46,10 @@ input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; padding: 0; a
 .verdict[data-tone="hold"] { border-color: var(--status-warn); }
 
 .inert { white-space: pre-wrap; overflow-wrap: anywhere; }
-.inert--block { display: block; margin: 4px 0; padding: 10px; font: 13px/1.45 var(--font-mono); border: 1px dashed var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); max-height: 352px; overflow: auto; }
 .inert__chip { display: inline-block; padding: 0 4px; border: 1px solid var(--danger-text); border-radius: 4px; background: var(--accent-soft); color: var(--danger-text); font: 12px var(--font-mono); }
 .claims { width: 100%; border-collapse: collapse; }
 .claims th, .claims td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: anywhere; font-size: 14px; }
 .claims th[scope="row"] { white-space: nowrap; font-family: var(--font-mono); font-weight: 700; }
-.claim--intent { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--status-info); }
 
 .flow { height: min(480px, 70vh); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .flow .react-flow { --xy-background-color-default: var(--surface); --xy-edge-stroke-default: var(--muted); --xy-edge-label-background-color-default: var(--surface); --xy-edge-label-color-default: var(--text); --xy-controls-button-background-color-default: var(--surface); --xy-controls-button-color-default: var(--text); --xy-controls-button-border-color-default: var(--border); --xy-controls-button-background-color-hover-default: var(--surface-2); --xy-background-pattern-dots-color-default: var(--border); }

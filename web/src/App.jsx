@@ -47,8 +47,8 @@ export default function App() {
     return (
       <>
         <SkipLink />
-        <header><Banner text={FALLBACK_BANNER} /></header>
         <main className="page" id="main" tabIndex={-1}>
+          <Banner text={FALLBACK_BANNER} />
           {loadError ? <p className="alert" role="alert">Could not reach the mock server: {loadError}</p> : <p className="muted" role="status">Loading the mock gateway...</p>}
         </main>
       </>
@@ -129,8 +129,9 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
   const setThemePersist = (v) => { setTheme(v); write("stl.theme", v); };
   const togglePresent = () => { write("stl.present", present ? "0" : "1"); setPresent(!present); };
   const go = (id) => { window.location.hash = `#/${id}`; };
+  // The section pills in the shell bar keep arrow-key moves (Left/Right/Home/End) on top of Tab.
   const onTabKey = (e) => {
-    const focused = e.target.closest?.('[role="tab"]')?.id?.replace(/^tab-/, '');
+    const focused = e.target.closest?.('.shell-nav a')?.id?.replace(/^tab-/, '');
     const i = TABS.findIndex(([id]) => id === (focused || tab));
     const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TABS.length - 1 }[e.key];
     if (to === undefined) return;
@@ -146,39 +147,41 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
   return (
     <>
       <SkipLink />
-      <header>
+      <header className="shell-bar">
+        <span className="shell-brand">
+          <span className="shell-logo" aria-hidden="true">JKT</span>
+          <h1>Stolen-token LAB</h1>
+          {modeInfo?.source === "real"
+            ? <span className="shell-badge shell-badge--real" data-testid="mode-badge">Real</span>
+            : <span className="shell-badge" data-testid="mode-badge">Mock<span className="sr-only">: in-process mock gateway, issuer and tokens, no tenant contacted</span></span>}
+        </span>
+        <nav className="shell-nav" aria-label="Lab sections" onKeyDown={onTabKey}>
+          {TABS.map(([id, label]) => (
+            <a key={id} id={`tab-${id}`} ref={(el) => { tabRefs.current[id] = el; }} href={`#/${id}`} aria-current={id === tab ? "page" : undefined}>{label}</a>
+          ))}
+        </nav>
+        <TopMenu
+          mode={{ value: modeInfo?.source === "real" ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo?.realAvailable === true, realHint: modeInfo?.realAvailable !== true ? modeInfo?.realReason : undefined }}
+          vertical={{ value: catalog.vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
+          theme={{ value: theme === "system" ? "auto" : theme, onChange: setThemePersist }}
+          present={{ active: present, onToggle: togglePresent, label: "Presenter (P)" }}
+          help={{ href: "https://github.com/curtismu7/stolen-token-LAB#readme" }}
+          version={modeInfo?.version || null}
+          onReset={resetAll}
+        >
+          <ShelfLink />
+          <ReturnLink app="stolen-token-lab" variant="header" />
+        </TopMenu>
+      </header>
+      <main className="page" id="main" tabIndex={-1}>
         <Banner text={catalog.banner || FALLBACK_BANNER} />
         <ReturnLink app="stolen-token-lab" />
-        <div className="head">
-        <h1 className="head__title"><span className="head__mark" aria-hidden="true">JKT</span> Stolen-token LAB</h1>
-        <div className="head__tools">
-            <ReturnLink app="stolen-token-lab" variant="header" />
-            <TopMenu
-              mode={{ value: modeInfo?.source === "real" ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo?.realAvailable === true, realHint: modeInfo?.realAvailable !== true ? modeInfo?.realReason : undefined }}
-              vertical={{ value: catalog.vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
-              theme={{ value: theme === "system" ? "auto" : theme, onChange: setThemePersist }}
-              present={{ active: present, onToggle: togglePresent, label: "Presenter (P)" }}
-              help={{ href: "https://github.com/curtismu7/stolen-token-LAB#readme" }}
-              version={modeInfo?.version || null}
-              onReset={resetAll}
-            >
-              <ShelfLink />
-            </TopMenu>
-        </div>
-        </div>
-      </header>
-      {modeNote && <p className="alert page" role="status" data-testid="mode-note">{modeNote}</p>}
-      <main className="page" id="main" tabIndex={-1}>
+        {modeNote && <p className="alert" role="status" data-testid="mode-note">{modeNote}</p>}
         <p className="muted" role="status" data-testid="reset-note">{resetNote}</p>
         {present && picked?.talk && (
           <aside className="presenter-say" aria-label="Talk track" data-testid="presenter-say"><strong>{picked.id}.</strong> <span>{fill(picked.talk, cast)}</span></aside>
         )}
-        <div className="tabs" role="tablist" aria-label="Lab sections" onKeyDown={onTabKey}>
-          {TABS.map(([id, label]) => (
-            <button key={id} id={`tab-${id}`} ref={(el) => { tabRefs.current[id] = el; }} type="button" role="tab" aria-selected={id === tab} aria-controls="panel" tabIndex={id === tab ? 0 : -1} onClick={() => go(id)}>{label}</button>
-          ))}
-        </div>
-        <div id="panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        <div id="panel" data-testid="panel">
           <p className="lede" data-admin-only>{fill("What stops {{user}}'s token being replayed by someone else? Nothing, unless the gateway binds it to something the thief does not have.", cast)}</p>
           <Panel app={app} />
         </div>

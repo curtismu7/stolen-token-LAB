@@ -55,7 +55,7 @@ describe("diagram", () => {
     const setBoxes = vi.fn(); const setCursor = vi.fn(); const resetPositions = vi.fn();
     const moved = startBoxes(diagram).map((b) => ({ ...b, position: { x: 1, y: 1 } }));
     render(<DiagramTab app={{ run: null, cast: {}, cursor: 2, setCursor, diagram, boxes: moved, setBoxes, resetPositions, resetEpoch: 0, theme: "light" }} />);
-    await userEvent.click(screen.getAllByRole("button", { name: "Reset" }).find((b) => b.closest("[role='tabpanel'], .flow") || !b.closest("header")));
+    await userEvent.click(screen.getAllByRole("button", { name: "Reset" }).find((b) => b.closest("#panel, .flow") || !b.closest("header")));
     expect(resetPositions).toHaveBeenCalledTimes(1);
     expect(setCursor).toHaveBeenCalledWith(-1);
     expect(startBoxes(diagram).map((b) => [b.id, b.position])).toEqual(diagram.nodes.map((n) => [n.id, { x: n.x, y: n.y }]));

@@ -67,7 +67,7 @@ describe("gateway tab", () => {
     await verdict();
     await user.selectOptions(screen.getByLabelText("Scenario"), "S03");
     await waitFor(() => expect(screen.getByTestId("verdict")).toHaveTextContent(/Replay stopped/));
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     await user.click(await screen.findByRole("checkbox", { name: /DPoP key binding/ }));
     await waitFor(() => expect(screen.getByTestId("gw-outcome")).toHaveTextContent(/allowed \(200\)/));
     expect(server.calls.filter((c) => c.path === "/api/run").at(-1).body.off).toEqual(["dpop_binding"]);
@@ -80,7 +80,7 @@ describe("gateway tab", () => {
     render(<App />);
     await verdict();
     await user.selectOptions(screen.getByLabelText("Scenario"), "S03");
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     await user.click(await screen.findByRole("checkbox", { name: /Audience binding/ }));
     await waitFor(() => expect(server.calls.filter((c) => c.path === "/api/run").at(-1).body.off).toEqual(["audience"]));
     await waitFor(() => expect(screen.getByTestId("gw-outcome")).toHaveTextContent(/refused/));
@@ -91,7 +91,7 @@ describe("gateway tab", () => {
     render(<App />);
     await verdict();
     await user.selectOptions(screen.getByLabelText("Scenario"), "S05");
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     await user.click(await screen.findByRole("button", { name: "Run mutation proof" }));
     expect(await screen.findByTestId("mut-verdict")).toHaveTextContent(/Proof holds for S05/);
     const rows = within(screen.getByTestId("mut-table")).getAllByRole("row");
@@ -108,7 +108,7 @@ describe("token and raw tabs", () => {
     await user.selectOptions(screen.getByLabelText("Scenario"), "S03");
     await waitFor(() => expect(screen.getByTestId("verdict")).toHaveTextContent(/stopped/));
     await user.click(screen.getByRole("button", { name: /The thief/ }).closest("button") || screen.getAllByRole("button", { name: /STOPPED/ })[0]);
-    await user.click(screen.getByRole("tab", { name: "Token" }));
+    await user.click(screen.getByRole("link", { name: "Token" }));
     expect(await screen.findByTestId("token-claims")).toHaveTextContent(/cnf/);
     expect(screen.getByTestId("proof-header")).toHaveTextContent(/dpop\+jwt/);
     expect(screen.getByTestId("proof-claims")).toHaveTextContent(/htu/);
@@ -121,7 +121,7 @@ describe("token and raw tabs", () => {
     await user.selectOptions(screen.getByLabelText("Scenario"), "S03");
     await waitFor(() => expect(screen.getByTestId("verdict")).toHaveTextContent(/stopped/));
     await user.click(screen.getAllByRole("button", { name: /STOPPED/ })[0]);
-    await user.click(screen.getByRole("tab", { name: "Token" }));
+    await user.click(screen.getByRole("link", { name: "Token" }));
     const claims = await screen.findByTestId("token-claims-box");
     expect(within(claims).getByRole("button", { name: "Form" })).toHaveAttribute("aria-pressed", "true");
     expect(within(claims).getByRole("button", { name: "JSON" })).toHaveAttribute("aria-pressed", "false");
@@ -138,7 +138,7 @@ describe("token and raw tabs", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("tab", { name: "Raw" }));
+    await user.click(screen.getByRole("link", { name: "Raw" }));
     expect(await screen.findByTestId("raw-request")).toHaveTextContent(/^GET /);
     expect(screen.getByTestId("raw-response-head")).toHaveTextContent(/^HTTP\/1.1 200/);
     expect(within(screen.getByTestId("gw-log")).getByText("authorized")).toBeInTheDocument();
@@ -148,7 +148,7 @@ describe("token and raw tabs", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("tab", { name: "Raw" }));
+    await user.click(screen.getByRole("link", { name: "Raw" }));
     const box = await screen.findByTestId("raw-response-body-box");
     expect(box).toHaveAttribute("data-view", "form");
     expect(within(box).getByRole("button", { name: "Form" })).toHaveAttribute("aria-pressed", "true");
@@ -203,7 +203,7 @@ describe("shell", () => {
     render(<App />);
     await verdict();
     for (const t of ["Attack", "Gateway", "Token", "Diagram", "Raw"]) {
-      await user.click(screen.getByRole("tab", { name: t }));
+      await user.click(screen.getByRole("link", { name: t }));
       expect(screen.getByTestId("mode-select")).toHaveValue("mock");
       expect(screen.getByRole("option", { name: "Real" })).toBeDisabled();
     }
@@ -214,7 +214,7 @@ describe("shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     await user.click(await screen.findByRole("checkbox", { name: /Audience binding/ }));
     expect(screen.getByRole("checkbox", { name: /Audience binding/ })).not.toBeChecked();
     server.bumpEpoch();
@@ -223,12 +223,29 @@ describe("shell", () => {
     expect(screen.getByRole("checkbox", { name: /Audience binding/ })).toBeChecked();
   });
 
-  it("the main landmark is kept: one banner header, one main, and the tab panel is inside it", async () => {
+  it("the main landmark is kept: one banner header, one main, and the section panel is inside it", async () => {
     render(<App />);
     await verdict();
     expect(screen.getAllByRole("main")).toHaveLength(1);
-    expect(screen.getByRole("main")).toContainElement(screen.getByRole("tabpanel"));
+    expect(screen.getByRole("main")).toContainElement(screen.getByTestId("panel"));
     expect(screen.getAllByRole("banner")).toHaveLength(1);
+  });
+
+  it("shell bar: brand, Mock badge, the current section pill and the TopMenu in header.shell-bar; the banner opens <main>", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await verdict();
+    const bar = document.querySelector("header.shell-bar");
+    expect(bar).not.toBeNull();
+    expect(bar.querySelector(".shell-brand h1")).toHaveTextContent("Stolen-token LAB");
+    expect(bar.querySelector("[data-testid=mode-badge]")).toHaveTextContent(/^Mock/);
+    expect(bar.querySelectorAll('.shell-nav a[aria-current="page"]')).toHaveLength(1);
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Attack");
+    expect(bar.querySelector("[data-testid=top-menu]")).toHaveClass("shell-right");
+    expect(bar.nextElementSibling).toBe(screen.getByRole("main"));
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("banner"));
+    await user.click(screen.getByRole("link", { name: "Token" }));
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Token");
   });
 
   it("Run buttons use aria-disabled and keep focus while a run is in flight", async () => {
@@ -241,7 +258,7 @@ describe("shell", () => {
     await user.click(run);
     expect(run).toHaveFocus();
     expect(run).not.toBeDisabled();
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     const proof = await screen.findByRole("button", { name: "Run mutation proof" });
     proof.focus();
     await user.click(proof);
@@ -254,7 +271,7 @@ describe("shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     await user.click(await screen.findByRole("checkbox", { name: /Audience binding/ }));
     await user.click(screen.getByTestId("reset"));
     await waitFor(() => expect(screen.getByTestId("reset-note")).toHaveTextContent(/all defences on/));
@@ -266,35 +283,35 @@ describe("shell", () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    await user.click(screen.getByRole("tab", { name: "Gateway" }));
+    await user.click(screen.getByRole("link", { name: "Gateway" }));
     const box = await screen.findByRole("checkbox", { name: /Audience binding/ });
     await user.click(box); expect(box).not.toBeChecked();
     await user.click(box); expect(box).toBeChecked();
     expect(screen.getByRole("button", { name: "Turn all defences on" })).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("theme select sets data-theme; tabs are reachable by arrow keys", async () => {
+  it("theme select sets data-theme; section pills are reachable by arrow keys", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
     await user.selectOptions(screen.getByTestId("theme-select"), "light");
     expect(document.documentElement.dataset.theme).toBe("light");
-    screen.getByRole("tab", { name: "Attack" }).focus();
+    screen.getByRole("link", { name: "Attack" }).focus();
     await user.keyboard("{ArrowRight}");
     expect(window.location.hash).toBe("#/gateway");
   });
 
-  it("arrow keys move from the focused tab, not the selected one", async () => {
+  it("arrow keys move from the focused section pill, not the current one", async () => {
     const user = userEvent.setup();
     render(<App />);
     await verdict();
-    screen.getByRole("tab", { name: "Attack" }).focus();
+    screen.getByRole("link", { name: "Attack" }).focus();
     await user.keyboard("{ArrowRight}");
     expect(window.location.hash).toBe("#/gateway");
-    screen.getByRole("tab", { name: "Raw" }).focus();
+    screen.getByRole("link", { name: "Raw" }).focus();
     await user.keyboard("{ArrowLeft}");
     expect(window.location.hash).toBe("#/diagram");
-    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Diagram" }));
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Diagram" }));
   });
 
   it("server text is inert: markup and control characters render as text and chips", async () => {

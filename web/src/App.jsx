@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";// Opened from Customer Agent LAB (UC12 routes here): strip below the banner + header Back only; nothing is preselected.
+import VerifyMark from "./components/VerifyMark.jsx";
 import ReturnLink from "./return-link/ReturnLink.jsx";
 import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode } from "./lib/api.js";
 import { fill } from "./lib/fill.js";
@@ -170,6 +171,7 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
           onReset={resetAll}
         >
           <ShelfLink />
+          <VerifyMark id="stolen-token-lab" />
           <ReturnLink app="stolen-token-lab" variant="header" />
         </TopMenu>
       </header>

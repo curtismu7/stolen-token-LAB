@@ -3,7 +3,7 @@
 :root[data-present="1"] body { font-size: 20px; }
 :root[data-present="1"] [data-admin-only] { display: none; }
 /* Page frame (STANDALONE-UI-PATTERNS.md section 3): one centred 1100px column; the simulation banner is its first child. */
-.page { max-width: 1100px; margin: 0 auto; padding: 16px 0 32px; }
+.page { max-width: 2200px; margin: 0 auto; padding: 16px 0 32px; }
 /* The vendored hand-off strip sets its own margin inline (12px 0 0), so the block after it carries the same 12px gap. */
 .page > .return-link--strip + * { margin-top: 12px; }
 h2 { margin: 8px 0 4px; font-size: 24px; }

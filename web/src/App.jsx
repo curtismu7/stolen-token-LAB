@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ShelfLink from "./components/ShelfLink.jsx";// Opened from Customer Agent LAB (UC12 routes here): strip below the banner + header Back only; nothing is preselected.
 import VerifyMark from "./components/VerifyMark.jsx";
 import ReturnLink from "./return-link/ReturnLink.jsx";
-import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode } from "./lib/api.js";
+import { getCatalog, getDiagram, getInfo, resetServer, runScenario, setMode, getTalkTrack } from "./lib/api.js";
+import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
 import { fill } from "./lib/fill.js";
 import { startBoxes } from "./lib/diagram.js";
 import AttackTab from "./tabs/AttackTab.jsx";
@@ -27,7 +28,6 @@ export default function App() {
   const [tab, setTab] = useState(tabFromHash);
   const [theme, setTheme] = useState(() => (["light", "dark"].includes(read("stl.theme", "")) ? read("stl.theme", "") : "system"));
   const [present, setPresent] = useState(() => read("stl.present", "0") === "1");
-
   useEffect(() => { Promise.all([getCatalog(), getDiagram(), getInfo()]).then(([catalog, diagram, info]) => { setData({ catalog, diagram, epoch: info.epoch }); setModeInfo(info); }).catch((e) => setLoadError(e.message)); }, []);
   useEffect(() => { const on = () => setTab(tabFromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
   useEffect(() => { if (theme === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme; }, [theme]);
@@ -62,6 +62,9 @@ const SkipLink = () => <a className="skip" href="#main" onClick={(e) => { e.prev
 const Banner = ({ text }) => <p className="banner" role="note" data-state="mock" data-testid="banner">{text}</p>;
 
 function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, present, setPresent }) {
+  const [talkOpen, setTalkOpen] = useState(false);
+  const [talk, setTalk] = useState([]);
+  useEffect(() => { getTalkTrack().then((t) => setTalk(t.talkTrack ?? [])).catch(() => {}); }, []);
   const { catalog, diagram } = data;
   const [run, setRun] = useState(null);
   const [scenarioId, setScenarioId] = useState(catalog.scenarios[0].id);
@@ -166,6 +169,7 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
           vertical={{ value: catalog.vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
           theme={{ value: theme === "system" ? "auto" : theme, onChange: setThemePersist }}
           present={{ active: present, onToggle: togglePresent, label: "Presenter (P)" }}
+          talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
           help={{ href: "https://github.com/curtismu7/stolen-token-LAB#readme" }}
           version={modeInfo?.version || null}
           onReset={resetAll}
@@ -188,6 +192,8 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
           <Panel app={app} />
         </div>
       </main>
+      <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talk} />
+
     </>
   );
 }

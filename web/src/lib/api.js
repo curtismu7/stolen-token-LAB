@@ -21,3 +21,4 @@ export const setMode = (source) => postJson("/api/mode", { source });
 export const resetServer = () => postJson("/api/reset");
 export const runScenario = (scenario, vertical, off = []) => postJson("/api/run", { scenario, vertical, off });
 export const getMutation = (scenario, vertical) => postJson("/api/mutation", { scenario, vertical });
+export const getTalkTrack = () => getJson("/api/talk");

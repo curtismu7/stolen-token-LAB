@@ -10,7 +10,7 @@ export function StolenPanel({ stolen }) {
   const items = [["token", "Access token"], ["proof", "A captured DPoP proof"], ["key", "The private key"], ["cert", "A client certificate"]];
   return (
     <section className="card" aria-labelledby="stolen-h" data-testid="stolen">
-      <h3 id="stolen-h">What I stole</h3>
+      <h3 id="stolen-h"><span className="step-num" aria-hidden="true">3</span>What I stole</h3>
       <ul className="stolen">
         {items.map(([k, t]) => (
           <li key={k} className="stolen__item" data-state={stolen?.[k] ? "has" : "hasnt"}><span>{t}</span><span className="pill" data-state={stolen?.[k] ? "bad" : "ok"}>{stolen?.[k] ? "YES" : "no"}</span></li>
@@ -26,10 +26,10 @@ export default function AttackTab({ app }) {
   const v = run ? verdictOf(run, catalog.controls) : null;
   return (
     <>
-      <h2>Replay a captured token</h2>
+      <h2><span className="step-num" aria-hidden="true">1</span>Replay a captured token</h2>
       <p className="lede" data-admin-only>{fill("{{agent}} calls {{api_a}} for {{user}}. A thief captures the access token off the wire and replays it. Pick a scenario, then turn defences on and off on the Gateway tab.", cast)}</p>
       <section className="card" aria-labelledby="scn-h">
-        <h3 id="scn-h">The replay</h3>
+        <h3 id="scn-h"><span className="step-num" aria-hidden="true">2</span>The replay</h3>
         <div className="controls">
           <label>Scenario
             <select value={scenarioId} onChange={(e) => setScenarioId(e.target.value)}>

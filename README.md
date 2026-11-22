@@ -112,3 +112,13 @@ On Node 26, a good run is: 97 server tests, 31 web tests, 27 repo and script tes
 More: `docs/architecture.md` (how it works), `docs/safety.md` (simulated vs real, the UNVERIFIED list), `docs/references.md` (RFCs, verified or not), `docs/talk-track.md`, `docs/live-checks.md` (optional owner-run steps against real products, instructions only), `docs/shelf-entry.json` (demo shelf), `content-pack.json` (Learning Hub).
 
 Related, not duplicated: attack-gallery (named attacks across the family; this is the deep dive on token theft), token-workbench (decode and flow catalog; this lab keeps only a small token panel), intent-par-inspector, mcp-auth-conformance-lab (authorization conformance, not theft).
+
+## Postman & MCP
+
+Prefer raw API calls or an agent?
+
+- **Postman:** [`stolen-token-replay/`](https://github.com/curtismu7/ping-postman-packages) in
+  `curtismu7/ping-postman-packages` — replays the stolen material against this lab's gateway
+  (default `http://127.0.0.1:4950`) with each defence on/off. Run this lab first.
+- **MCP:** the `token_replay` tool of [`ping-provisioning-mcp-LAB`](https://github.com/curtismu7/ping-provisioning-mcp-LAB)
+  does the same and reports which defences stopped the replay.

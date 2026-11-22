@@ -68,6 +68,15 @@ The header on every page has a **Mock | Live** toggle and a chip that names the 
 
 ## Health, doctor and reset
 
+## Postman collection
+
+`postman/stolen-token-lab.postman_collection.json` drives the attack gallery without the UI: the scenario catalog and safety scan, single and all-scenario runs, a scenario mutation, and reset. It needs no environment — every token, server and gateway is an in-process labelled mock and the lab has no live mode.
+
+```
+node ../../shared/postman/generator.mjs --spec postman/spec.json            # regenerate (never hand-edit the output)
+npx newman run postman/stolen-token-lab.postman_collection.json
+```
+
 ```
 npm run doctor   # node version, bind, port range, story data, netguard self-test (7 routes out), scenarios, diagrams, an HTTP cycle, port free
 npm run reset    # POST /api/reset on a running lab (PORT=4951 npm run reset for another port); there are no saved settings to keep

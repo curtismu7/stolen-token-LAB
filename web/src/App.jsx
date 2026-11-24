@@ -165,6 +165,7 @@ function Shell({ data, setData, modeInfo, setModeInfo, tab, theme, setTheme, pre
           ))}
         </nav>
         <TopMenu
+          postman={{ repo: "curtismu7/stolen-token-LAB", slug: "stolen-token-lab" }}
           mode={{ value: modeInfo?.source === "real" ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo?.realAvailable === true, realHint: modeInfo?.realAvailable !== true ? modeInfo?.realReason : undefined }}
           vertical={{ value: catalog.vertical, onChange: pickVertical, options: catalog.verticals.map((v) => v.id) }}
           theme={{ value: theme === "system" ? "auto" : theme, onChange: setThemePersist }}
